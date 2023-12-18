@@ -1,0 +1,43 @@
+import maya.cmds as cmds
+
+def create_custom_button():
+    # Check if the window exists; if so, delete it
+    if cmds.window("customToolWindow", exists=True):
+        cmds.deleteUI("customToolWindow", window=True)
+
+    # Create a new window
+    window = cmds.window("customToolWindow", title="Custom Tool", widthHeight=(200, 100))
+
+    # Create a layout for the button
+    cmds.columnLayout(adjustableColumn=True)
+    
+    # Create a button with a command
+    cmds.button(label="Auto Map", command=apply_operations)
+
+    # Show the window
+    cmds.showWindow(window)
+
+def apply_operations(*args):
+    # Get the selected mesh
+    selected_objects = cmds.ls(selection=True, dag=True, type="mesh")
+    
+    if not selected_objects:
+        cmds.warning("Please select a mesh.")
+        return
+
+    # Iterate through selected meshes
+    for obj in selected_objects:
+        # Perform polyAutoProjection
+        cmds.polyAutoProjection(obj, layoutMethod=2)  # 2 corresponds to "Best Plane"
+
+        # Set texel density map size to 4096
+        cmds.polyEditUV(obj + ".map[1]", relative=True, uValue=4096, vValue=4096)
+
+        # Perform u3dUnfold
+        cmds.u3dUnfold(obj, iterations=500)
+
+        # Perform u3dLayout
+        cmds.u3dLayout(obj, res=4096, scl=1, box=(0, 1, 0, 1))
+
+# Create the custom button
+create_custom_button()
